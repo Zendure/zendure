@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "zendure"
-version = "0.1.0"
+version = "0.1.1"
 description = "Async local-network client for Zendure energy devices over the zenSDK HTTP protocol (no cloud, no app token)."
 readme = "README.md"
 requires-python = ">=3.14.2"
@@ -45,6 +45,11 @@ Issues = "https://github.com/Zendure/zendure/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/zendure"]
+
+# Explicit allowlist: hatch would otherwise pack every non-ignored file in the
+# working tree into the sdist.
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/README.md", "/LICENSE", "/NOTICE"]
 
 [tool.ruff]
 line-length = 88

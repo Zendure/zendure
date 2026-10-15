@@ -1,9 +1,19 @@
-"""One-shot live check against a LAN device. Not part of the unit suite."""
+"""One-shot live check against a LAN device. Not part of the unit suite.
+
+Reads the device, then briefly toggles ``lampSwitch`` and nudges ``outputLimit``,
+restoring both. Usage::
+
+    python scripts/live_device_check.py --host <device-ip>
+
+The host may also come from the ``ZENDURE_HOST`` environment variable.
+"""
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
+import os
 import traceback
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -14,7 +24,6 @@ from zendure import create_local_client
 from zendure.client import ZendureClient
 from zendure.models import DeviceSnapshot
 
-HOST = "172.16.211.240"
 SAFE_OUTPUT = 250  # W; stay near the current 200, well under inverseMaxPower=800
 
 
@@ -74,14 +83,14 @@ async def _set(
         report.add(label, False, f"target={value}", f"{type(err).__name__}: {err}")
 
 
-async def run() -> int:
+async def run(host: str) -> int:
     report = Report()
     original_lamp: int | None = None
     original_out: int | None = None
 
     timeout = aiohttp.ClientTimeout(total=10)
     async with aiohttp.ClientSession(timeout=timeout) as session:
-        client = create_local_client(HOST, session, timeout=8.0)
+        client = create_local_client(host, session, timeout=8.0)
         try:
             try:
                 snap = await client.async_refresh()
@@ -109,10 +118,10 @@ async def run() -> int:
                 report.add(
                     "read_status",
                     False,
-                    HOST,
+                    host,
                     f"{type(err).__name__}: {err}\n{traceback.format_exc()}",
                 )
-                _print(report)
+                _print(host, report)
                 return 1
 
             other_lamp = 0 if original_lamp == 1 else 1
@@ -159,13 +168,13 @@ async def run() -> int:
         finally:
             await client.close()
 
-    _print(report)
+    _print(host, report)
     return 0 if all(s.ok for s in report.steps) else 1
 
 
-def _print(report: Report) -> None:
+def _print(host: str, report: Report) -> None:
     payload = {
-        "host": HOST,
+        "host": host,
         "when": datetime.now(tz=UTC).isoformat(),
         "steps": [
             {
@@ -181,5 +190,20 @@ def _print(report: Report) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="One-shot live check against a Zendure device on the LAN."
+    )
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("ZENDURE_HOST"),
+        help="device IP or host name (default: $ZENDURE_HOST)",
+    )
+    args = parser.parse_args()
+    if not args.host:
+        parser.error("--host is required (or set ZENDURE_HOST)")
+    return asyncio.run(run(args.host))
+
+
 if __name__ == "__main__":
-    raise SystemExit(asyncio.run(run()))
+    raise SystemExit(main())

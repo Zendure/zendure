@@ -1,6 +1,7 @@
 """Read-only property descriptions (protocol-agnostic).
 
-Static declaration of every sensor the library exposes for the Max 5000 Pro:
+Static declaration of every sensor the library exposes for the supported models
+(SolarFlow 2400 AC+ and Max 5000 Pro share one property set):
 its entity kind, unit, and HA-style classes. Raw-to-value decoding is NOT here
 (it is a protocol detail in ``protocols/local_http/codec.py``); this table only
 says what each entity *is*.

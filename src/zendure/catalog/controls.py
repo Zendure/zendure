@@ -1,6 +1,7 @@
 """Writable property (control) descriptions and pre-write validation.
 
-Static declaration of the 9 Max 5000 Pro controls plus the pure validation that
+Static declaration of the 9 controls shared by the supported models (SolarFlow
+2400 AC+ and Max 5000 Pro) plus the pure validation that
 guards every write BEFORE anything leaves the library. An out-of-range, bad-enum
 or read-only write raises ``ValidationError`` and nothing is sent; the library
 never silently clamps (unlike the old integration).

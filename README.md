@@ -5,15 +5,26 @@ HTTP** protocol — no cloud, no MQTT, no app token.
 
 The device is reached directly on the LAN: `GET /properties/report` to read all
 state, `POST /properties/write` to control it. This library is standalone and
-**never imports `homeassistant`**; a thin Home Assistant integration consumes it
-in a later phase.
+**never imports `homeassistant`**; the Home Assistant `zendure` integration is a
+thin layer on top of it.
+
+```bash
+pip install zendure
+```
 
 ## Status
 
-Early development. First target model: **Max 5000 Pro** (`product =
-SolarFlowMax5000Pro`), read + control. Protocol values are derived from a real
-device report and the public zenSDK docs; items not yet checked on a Max 5000
-Pro are marked *candidate* in the catalog and locked by tests until verified.
+Early development (0.x): the public API may still change between minor
+versions. Read and control are supported for:
+
+| Model | Reported `product` | Verified on real hardware |
+|---|---|---|
+| SolarFlow 2400 AC+ | `solarFlow2400AC+` | Yes |
+| SolarFlow Max 5000 Pro | `SolarFlowMax5000Pro` | Not yet (same property set as 2400 AC+) |
+
+Protocol values are derived from a real 2400 AC+ report and the public zenSDK
+docs. Items whose meaning is not yet confirmed on hardware are marked
+*candidate* in the catalog and locked by tests until verified.
 
 ## Requirements
 
@@ -29,6 +40,10 @@ ruff check .
 mypy
 pytest
 ```
+
+`scripts/live_device_check.py --host <device-ip>` runs a one-shot check against
+a real device. It briefly changes `lampSwitch` and `outputLimit`, then restores
+them.
 
 ## License
 

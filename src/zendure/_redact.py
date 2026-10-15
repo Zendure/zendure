@@ -4,7 +4,7 @@
 def mask_serial(serial_number: str) -> str:
     """Keep a 4-character prefix for correlation and hide the rest.
 
-    ``HEC4ADP5P210250`` -> ``HEC4***``.
+    ``TESTDEV00000001`` -> ``TEST***``.
     """
     if len(serial_number) <= 4:
         return "***"
