@@ -16,18 +16,18 @@ from zendure.protocols.local_http.messages import (
 )
 
 
-def test_identity_from_top_level(report_max5000pro: dict[str, Any]) -> None:
-    report = parse_report(report_max5000pro)
+def test_identity_from_top_level(report_5000maxpro: dict[str, Any]) -> None:
+    report = parse_report(report_5000maxpro)
     assert report.serial_number == "TESTDEV00000001"
-    assert report.model_key == "max_5000_pro"
-    assert report.product_raw == "SolarFlowMax5000Pro"
+    assert report.model_key == "solarflow_5000_max_pro"
+    assert report.product_raw == "SolarFlow5000MaxPro"
     assert report.protocol_version == 3
     assert report.message_id == 1
     assert report.timestamp == 1791959594
 
 
-def test_device_values_decoded(report_max5000pro: dict[str, Any]) -> None:
-    props = parse_report(report_max5000pro).properties
+def test_device_values_decoded(report_5000maxpro: dict[str, Any]) -> None:
+    props = parse_report(report_5000maxpro).properties
     assert props["socSet"] == 100.0
     assert props["minSoc"] == 10.0
     assert props["hyperTmp"] == 34.0
@@ -36,13 +36,13 @@ def test_device_values_decoded(report_max5000pro: dict[str, Any]) -> None:
     assert props["inverseMaxPower"] == 800
 
 
-def test_unknown_keys_kept_raw(report_max5000pro: dict[str, Any]) -> None:
+def test_unknown_keys_kept_raw(report_5000maxpro: dict[str, Any]) -> None:
     # Not in the catalog: kept as raw values, never turned into entities here.
-    assert parse_report(report_max5000pro).properties["acCouplingState"] == 57344
+    assert parse_report(report_5000maxpro).properties["acCouplingState"] == 57344
 
 
-def test_battery_decoded(report_max5000pro: dict[str, Any]) -> None:
-    report = parse_report(report_max5000pro)
+def test_battery_decoded(report_5000maxpro: dict[str, Any]) -> None:
+    report = parse_report(report_5000maxpro)
     assert report.batteries_present is True
     (battery,) = report.batteries
     assert battery.serial_number == "TESTBAT00000001"
@@ -63,69 +63,69 @@ def test_real_2400_product_is_supported(report_2400acplus: dict[str, Any]) -> No
 
 @pytest.mark.parametrize("field", ["sn", "product"])
 def test_missing_identity_rejected(
-    report_max5000pro: dict[str, Any], field: str
+    report_5000maxpro: dict[str, Any], field: str
 ) -> None:
-    del report_max5000pro[field]
+    del report_5000maxpro[field]
     with pytest.raises(MalformedResponseError):
-        parse_report(report_max5000pro)
+        parse_report(report_5000maxpro)
 
 
-def test_empty_serial_rejected(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["sn"] = ""
+def test_empty_serial_rejected(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["sn"] = ""
     with pytest.raises(MalformedResponseError):
-        parse_report(report_max5000pro)
+        parse_report(report_5000maxpro)
 
 
-def test_properties_not_object_rejected(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["properties"] = [1, 2]
+def test_properties_not_object_rejected(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["properties"] = [1, 2]
     with pytest.raises(MalformedResponseError):
-        parse_report(report_max5000pro)
+        parse_report(report_5000maxpro)
 
 
-def test_missing_packdata_not_present(report_max5000pro: dict[str, Any]) -> None:
-    del report_max5000pro["packData"]
-    report = parse_report(report_max5000pro)
+def test_missing_packdata_not_present(report_5000maxpro: dict[str, Any]) -> None:
+    del report_5000maxpro["packData"]
+    report = parse_report(report_5000maxpro)
     assert report.batteries_present is False
     assert report.batteries == ()
 
 
-def test_packdata_not_list_rejected(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["packData"] = {"sn": "X"}
+def test_packdata_not_list_rejected(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["packData"] = {"sn": "X"}
     with pytest.raises(MalformedResponseError):
-        parse_report(report_max5000pro)
+        parse_report(report_5000maxpro)
 
 
-def test_too_many_batteries_rejected(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["packData"] = [
+def test_too_many_batteries_rejected(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["packData"] = [
         {"sn": f"BAT{i}"} for i in range(MAX_BATTERIES + 1)
     ]
     with pytest.raises(MalformedResponseError):
-        parse_report(report_max5000pro)
+        parse_report(report_5000maxpro)
 
 
-def test_invalid_packs_skipped(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["packData"] = ["junk", {"socLevel": 5}, {"sn": "BAT1"}]
-    report = parse_report(report_max5000pro)
+def test_invalid_packs_skipped(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["packData"] = ["junk", {"socLevel": 5}, {"sn": "BAT1"}]
+    report = parse_report(report_5000maxpro)
     assert [b.serial_number for b in report.batteries] == ["BAT1"]
 
 
-def test_non_scalar_values_dropped(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["properties"]["nested"] = {"a": 1}
-    report_max5000pro["properties"]["listy"] = [1]
-    props = parse_report(report_max5000pro).properties
+def test_non_scalar_values_dropped(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["properties"]["nested"] = {"a": 1}
+    report_5000maxpro["properties"]["listy"] = [1]
+    props = parse_report(report_5000maxpro).properties
     assert "nested" not in props
     assert "listy" not in props
 
 
-def test_bool_becomes_int(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["properties"]["lampSwitch"] = True
-    assert parse_report(report_max5000pro).properties["lampSwitch"] == 1
+def test_bool_becomes_int(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["properties"]["lampSwitch"] = True
+    assert parse_report(report_5000maxpro).properties["lampSwitch"] == 1
 
 
-def test_non_int_metadata_ignored(report_max5000pro: dict[str, Any]) -> None:
-    report_max5000pro["messageId"] = "1"
-    report_max5000pro["version"] = True
-    report = parse_report(report_max5000pro)
+def test_non_int_metadata_ignored(report_5000maxpro: dict[str, Any]) -> None:
+    report_5000maxpro["messageId"] = "1"
+    report_5000maxpro["version"] = True
+    report = parse_report(report_5000maxpro)
     assert report.message_id is None
     assert report.protocol_version is None
 

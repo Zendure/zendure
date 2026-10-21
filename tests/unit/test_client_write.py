@@ -25,8 +25,8 @@ class MemoryProtocol(DeviceProtocol):
     async def async_read(self) -> DeviceReport:
         return DeviceReport(
             serial_number="TESTDEV",
-            model_key="max_5000_pro",
-            product_raw="SolarFlowMax5000Pro",
+            model_key="solarflow_5000_max_pro",
+            product_raw="SolarFlow5000MaxPro",
             properties=self.values,
         )
 

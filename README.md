@@ -20,7 +20,7 @@ versions. Read and control are supported for:
 | Model | Reported `product` | Verified on real hardware |
 |---|---|---|
 | SolarFlow 2400 AC+ | `solarFlow2400AC+` | Yes |
-| SolarFlow Max 5000 Pro | `SolarFlowMax5000Pro` | Not yet (same property set as 2400 AC+) |
+| SolarFlow 5000 Max Pro | `SolarFlow5000MaxPro` | Not yet (same property set as 2400 AC+) |
 
 Protocol values are derived from a real 2400 AC+ report and the public zenSDK
 docs. Items whose meaning is not yet confirmed on hardware are marked

@@ -1,9 +1,9 @@
 """Shared test fixtures.
 
 Fixture reports are desensitized copies of a real SolarFlow 2400 AC+ report:
-serial numbers are fictional. Max 5000 Pro has the same property set, so the
-Max 5000 Pro fixture is DERIVED by changing only ``product``; it is not a
-captured Max 5000 Pro message.
+serial numbers are fictional. 5000 Max Pro has the same property set, so the
+5000 Max Pro fixture is DERIVED by changing only ``product``; it is not a
+captured 5000 Max Pro message.
 """
 
 import copy
@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 
 FIXTURES = Path(__file__).parent / "fixtures"
-MAX_5000_PRO_PRODUCT = "SolarFlowMax5000Pro"
+SOLARFLOW_5000_MAX_PRO_PRODUCT = "SolarFlow5000MaxPro"
 
 
 def load_fixture(name: str) -> dict[str, Any]:
@@ -29,8 +29,8 @@ def report_2400acplus() -> dict[str, Any]:
 
 
 @pytest.fixture
-def report_max5000pro() -> dict[str, Any]:
-    """Derived Max 5000 Pro report (only ``product`` differs from the real one)."""
+def report_5000maxpro() -> dict[str, Any]:
+    """Derived 5000 Max Pro report (only ``product`` differs from the real one)."""
     report = copy.deepcopy(load_fixture("report_2400acplus_real.json"))
-    report["product"] = MAX_5000_PRO_PRODUCT
+    report["product"] = SOLARFLOW_5000_MAX_PRO_PRODUCT
     return report

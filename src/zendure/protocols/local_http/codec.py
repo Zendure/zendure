@@ -3,8 +3,8 @@
 Converts the device's raw integers into real-world values. These scaling rules
 are zenSDK-specific, which is why they live in the protocol layer, not the
 catalog. Every rule below was checked against a real SolarFlow 2400 AC+ report
-(same property set as Max 5000 Pro); items whose sign/semantics still need a
-live Max 5000 Pro are flagged "candidate" in the sensor catalog.
+(same property set as 5000 Max Pro); items whose sign/semantics still need a
+live 5000 Max Pro are flagged "candidate" in the sensor catalog.
 """
 
 from collections.abc import Callable

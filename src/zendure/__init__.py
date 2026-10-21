@@ -23,6 +23,9 @@ from .exceptions import (
     ClientClosedError,
     DeviceMismatchError,
     MalformedResponseError,
+    ProvisioningError,
+    ProvisioningFailedError,
+    ProvisioningTimeoutError,
     UnsupportedDeviceError,
     UnsupportedPropertyError,
     ValidationError,
@@ -43,7 +46,7 @@ from .models import (
     SensorDescription,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 __all__ = [
     "Availability",
@@ -62,6 +65,9 @@ __all__ = [
     "MalformedResponseError",
     "PropertyValue",
     "ProtocolWarning",
+    "ProvisioningError",
+    "ProvisioningFailedError",
+    "ProvisioningTimeoutError",
     "SensorDescription",
     "UnsupportedDeviceError",
     "UnsupportedPropertyError",

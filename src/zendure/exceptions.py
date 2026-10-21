@@ -77,6 +77,25 @@ class UnsupportedPropertyError(ZendureError):
         self.key = key
 
 
+class ProvisioningError(ZendureError):
+    """Wi-Fi provisioning over BLE did not complete."""
+
+
+class ProvisioningFailedError(ProvisioningError):
+    """The device reported that it could not join the Wi-Fi network.
+
+    Typical causes: wrong password, network not found, or no DHCP lease.
+    The device does not say which.
+    """
+
+
+class ProvisioningTimeoutError(ProvisioningError):
+    """The device did not report a join result in time.
+
+    The credentials may or may not have been applied.
+    """
+
+
 class ValidationError(ZendureError):
     """An input failed validation before any request was sent.
 
@@ -90,6 +109,9 @@ __all__ = [
     "ClientClosedError",
     "DeviceMismatchError",
     "MalformedResponseError",
+    "ProvisioningError",
+    "ProvisioningFailedError",
+    "ProvisioningTimeoutError",
     "UnsupportedDeviceError",
     "UnsupportedPropertyError",
     "ValidationError",

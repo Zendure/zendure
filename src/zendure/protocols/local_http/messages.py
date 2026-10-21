@@ -22,7 +22,7 @@ from .codec import decode_property
 from .write_errors import write_error_message
 
 MAX_BATTERIES: Final = 32
-"""Defensive bound on packData length (Max 5000 Pro supports far fewer)."""
+"""Defensive bound on packData length (5000 Max Pro supports far fewer)."""
 
 _BATTERY_META_KEYS: Final = frozenset({"sn", "packType"})
 

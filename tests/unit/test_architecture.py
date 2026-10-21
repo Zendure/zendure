@@ -69,6 +69,16 @@ def test_agnostic_layers_do_not_import_concrete_protocol() -> None:
     assert offenders == []
 
 
+def test_only_ble_package_imports_bleak() -> None:
+    offenders = [
+        path.relative_to(SRC).as_posix()
+        for path in SRC.rglob("*.py")
+        if any(m.split(".")[0] == "bleak" for m in _imported_modules(path))
+        and not path.relative_to(SRC).as_posix().startswith("ble/")
+    ]
+    assert offenders == []
+
+
 def test_only_transport_imports_aiohttp_client() -> None:
     # Protocol code and the factory may reference the session type; only
     # transport performs I/O.

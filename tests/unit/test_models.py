@@ -16,8 +16,8 @@ from zendure.models import (
 def _device(**overrides: object) -> DeviceSnapshot:
     defaults: dict[str, object] = {
         "serial_number": "DEVSN",
-        "model_key": "max_5000_pro",
-        "product_raw": "SolarFlowMax5000Pro",
+        "model_key": "solarflow_5000_max_pro",
+        "product_raw": "SolarFlow5000MaxPro",
         "availability": Availability.ONLINE,
         "properties": {"electricLevel": 10},
     }

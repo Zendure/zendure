@@ -31,9 +31,9 @@ def test_protocol_subtypes() -> None:
 
 
 def test_unsupported_device_carries_product() -> None:
-    err = UnsupportedDeviceError("SolarFlowMax5000Pro")
-    assert err.product == "SolarFlowMax5000Pro"
-    assert "SolarFlowMax5000Pro" in str(err)
+    err = UnsupportedDeviceError("SolarFlow5000MaxPro")
+    assert err.product == "SolarFlow5000MaxPro"
+    assert "SolarFlow5000MaxPro" in str(err)
 
 
 def test_unsupported_property_carries_key() -> None:

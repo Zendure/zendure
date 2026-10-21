@@ -4,7 +4,7 @@ A device's reported ``product`` string is normalized (lower-cased, whitespace
 removed) and looked up here, replacing the old per-model inheritance tree. An
 unregistered product raises ``UnsupportedDeviceError`` rather than guessing.
 
-Only ``max_5000_pro`` and ``solarflow_2400ac_plus`` are registered. They share
+Only ``solarflow_5000_max_pro`` and ``solarflow_2400ac_plus`` are registered. They share
 the same property set. Power limits are deliberately NOT stored here: the
 device reports its own dynamic limits (``inverseMaxPower``, ``chargeMaxLimit``),
 which always win over any static value. Other models are added as they are
@@ -35,12 +35,12 @@ class DeviceCapability:
 # Keyed by model_key. `aliases` hold already-normalized product strings.
 _CAPABILITIES: tuple[DeviceCapability, ...] = (
     DeviceCapability(
-        model_key="max_5000_pro",
-        display_name="SolarFlow Max 5000 Pro",
-        # 4 PV inputs per the Max 5000 Pro feature list (candidate until a real
-        # Max 5000 Pro report is seen; its property set matches 2400 AC+).
+        model_key="solarflow_5000_max_pro",
+        display_name="SolarFlow 5000 Max Pro",
+        # 4 PV inputs per the 5000 Max Pro feature list (candidate until a real
+        # 5000 Max Pro report is seen; its property set matches 2400 AC+).
         solar_channels=4,
-        aliases=("solarflowmax5000pro",),
+        aliases=("solarflow5000maxpro",),
     ),
     DeviceCapability(
         model_key="solarflow_2400ac_plus",

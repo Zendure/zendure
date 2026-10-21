@@ -9,35 +9,35 @@ from zendure.protocols.local_http.discovery import (
 
 
 def test_build_strips_spaces() -> None:
-    assert build_mdns_hostname("SolarFlow Max 5000 Pro", "DEVSN") == (
-        "zendure-SolarFlowMax5000Pro-DEVSN.local"
+    assert build_mdns_hostname("SolarFlow 5000 Max Pro", "DEVSN") == (
+        "zendure-SolarFlow5000MaxPro-DEVSN.local"
     )
 
 
 @pytest.mark.parametrize(
     "hostname",
     [
-        "zendure-SolarFlowMax5000Pro-DEVSN.local",
-        "zendure-SolarFlowMax5000Pro-DEVSN.local.",
-        "ZENDURE-SolarFlowMax5000Pro-DEVSN.LOCAL",
+        "zendure-SolarFlow5000MaxPro-DEVSN.local",
+        "zendure-SolarFlow5000MaxPro-DEVSN.local.",
+        "ZENDURE-SolarFlow5000MaxPro-DEVSN.LOCAL",
     ],
 )
 def test_parse_valid(hostname: str) -> None:
-    assert parse_mdns_hostname(hostname) == ("SolarFlowMax5000Pro", "DEVSN")
+    assert parse_mdns_hostname(hostname) == ("SolarFlow5000MaxPro", "DEVSN")
 
 
 def test_round_trip() -> None:
-    name = build_mdns_hostname("SolarFlowMax5000Pro", "DEVSN")
-    assert parse_mdns_hostname(name) == ("SolarFlowMax5000Pro", "DEVSN")
+    name = build_mdns_hostname("SolarFlow5000MaxPro", "DEVSN")
+    assert parse_mdns_hostname(name) == ("SolarFlow5000MaxPro", "DEVSN")
 
 
 @pytest.mark.parametrize(
     "hostname",
     [
         "shelly-plus-1.local",
-        "zendure-SolarFlowMax5000Pro.local",
+        "zendure-SolarFlow5000MaxPro.local",
         "zendure--DEVSN.local",
-        "zendure-SolarFlowMax5000Pro-DEVSN.lan",
+        "zendure-SolarFlow5000MaxPro-DEVSN.lan",
     ],
 )
 def test_parse_invalid(hostname: str) -> None:

@@ -12,7 +12,7 @@ _SUFFIX: Final = ".local"
 
 
 def build_mdns_hostname(product: str, serial_number: str) -> str:
-    """``SolarFlow Max 5000 Pro`` + sn -> ``zendure-SolarFlowMax5000Pro-<sn>.local``."""
+    """``SolarFlow 5000 Max Pro`` + sn -> ``zendure-SolarFlow5000MaxPro-<sn>.local``."""
     model = "".join(product.split())
     return f"{_PREFIX}{model}-{serial_number}{_SUFFIX}"
 

@@ -97,7 +97,10 @@ async def run(host: str) -> int:
                 original_lamp = int(snap.properties.get("lampSwitch") or 0)
                 original_out = int(snap.properties.get("outputLimit") or 0)
                 report.add("read_status", True, _brief(snap))
-                if snap.model_key not in {"solarflow_2400ac_plus", "max_5000_pro"}:
+                if snap.model_key not in {
+                    "solarflow_2400ac_plus",
+                    "solarflow_5000_max_pro",
+                }:
                     report.add(
                         "model_registered",
                         False,

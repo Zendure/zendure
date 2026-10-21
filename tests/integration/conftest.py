@@ -10,8 +10,8 @@ from fake_device import FakeDevice
 
 
 @pytest.fixture
-def device(report_max5000pro: dict[str, Any]) -> FakeDevice:
-    return FakeDevice(report_max5000pro)
+def device(report_5000maxpro: dict[str, Any]) -> FakeDevice:
+    return FakeDevice(report_5000maxpro)
 
 
 @pytest.fixture

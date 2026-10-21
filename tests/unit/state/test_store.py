@@ -26,8 +26,8 @@ SERIAL = "TESTDEV00000001"
 def _report(**overrides: object) -> DeviceReport:
     defaults: dict[str, object] = {
         "serial_number": SERIAL,
-        "model_key": "max_5000_pro",
-        "product_raw": "SolarFlowMax5000Pro",
+        "model_key": "solarflow_5000_max_pro",
+        "product_raw": "SolarFlow5000MaxPro",
         "properties": {"electricLevel": 10},
         "message_id": 1,
         "timestamp": 1791959594,

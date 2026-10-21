@@ -37,7 +37,7 @@ async def test_read_parses_report(
     server: TestServer, session: aiohttp.ClientSession
 ) -> None:
     report = await _protocol(server, session).async_read()
-    assert report.model_key == "max_5000_pro"
+    assert report.model_key == "solarflow_5000_max_pro"
     assert report.properties["socSet"] == 100.0
     assert report.batteries[0].properties["maxVol"] == 3.21
 
