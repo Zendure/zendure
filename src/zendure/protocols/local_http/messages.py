@@ -17,12 +17,18 @@ from ...exceptions import (
     WriteRejectedError,
 )
 from ...models import PropertyValue
-from ...state.report import BatteryReport, DeviceReport
+from ...state.report import BatteryReport, DeviceReport, FaultReport
 from .codec import decode_property
 from .write_errors import write_error_message
 
 MAX_BATTERIES: Final = 32
 """Defensive bound on packData length (5000 Max Pro supports far fewer)."""
+
+MAX_FAULT_ENTRIES: Final = 64
+"""Defensive bound on the fault report's ``data`` length."""
+
+# Year 2100: rejects garbage that would overflow datetime conversion.
+_MAX_TIMESTAMP: Final = 4_102_444_800
 
 _BATTERY_META_KEYS: Final = frozenset({"sn", "packType"})
 
@@ -60,6 +66,58 @@ def parse_report(payload: Mapping[str, Any]) -> DeviceReport:
         message_id=_optional_int(payload.get("messageId")),
         timestamp=_optional_int(payload.get("timestamp")),
     )
+
+
+def parse_fault_report(payload: Mapping[str, Any]) -> FaultReport:
+    """Validate and decode one ``properties/error`` reply.
+
+    Shape::
+
+        {"messageId": 30, "timestamp": 1793085345, "deviceId": "...",
+         "productKey": "...", "offData": 0, "eventId": 3,
+         "data": [{"code": 6, "timestamp": 1793085345}, ...]}
+
+    ``data`` lists every active fault (empty when there is none), so a reply
+    is a full snapshot. Each code is kept once, in listed order; code 0 is
+    skipped as "no fault". ``deviceId`` is a cloud id, not the serial number,
+    so it cannot be checked here; the device report read just before already
+    checks identity.
+
+    Raises:
+        MalformedResponseError: ``data`` missing or too long, or an entry
+            without a non-negative integer ``code``.
+    """
+    entries = payload.get("data")
+    if not isinstance(entries, list):
+        raise MalformedResponseError("fault report data is not a list")
+    if len(entries) > MAX_FAULT_ENTRIES:
+        raise MalformedResponseError(
+            f"fault report has {len(entries)} entries (limit {MAX_FAULT_ENTRIES})"
+        )
+    codes: list[int] = []
+    since: dict[int, int] = {}
+    for entry in entries:
+        code = entry.get("code") if isinstance(entry, Mapping) else None
+        if not isinstance(code, int) or isinstance(code, bool) or code < 0:
+            raise MalformedResponseError(f"fault report entry {entry!r} is invalid")
+        if not code or code in codes:
+            continue
+        codes.append(code)
+        if (timestamp := _timestamp(entry.get("timestamp"))) is not None:
+            since[code] = timestamp
+    return FaultReport(
+        codes=tuple(codes),
+        since=since,
+        message_id=_optional_int(payload.get("messageId")),
+        timestamp=_optional_int(payload.get("timestamp")),
+    )
+
+
+def _timestamp(value: object) -> int | None:
+    """A plausible Unix time in seconds, or ``None``."""
+    if (seconds := _optional_int(value)) is None or not 0 < seconds < _MAX_TIMESTAMP:
+        return None
+    return seconds
 
 
 WRITE_SUCCESS_CODE: Final = 200
@@ -172,7 +230,9 @@ def _optional_int(value: object) -> int | None:
 
 __all__ = [
     "MAX_BATTERIES",
+    "MAX_FAULT_ENTRIES",
     "WRITE_SUCCESS_CODE",
+    "parse_fault_report",
     "parse_report",
     "parse_write_response",
 ]

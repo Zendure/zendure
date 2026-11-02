@@ -96,6 +96,18 @@ class ProvisioningTimeoutError(ProvisioningError):
     """
 
 
+class UnsupportedFeatureError(ZendureError):
+    """The device or protocol does not offer this feature.
+
+    Typical cause: firmware without ``GET /properties/error``. This is a fixed
+    property of the device, not a transient failure; asking again will not help.
+    """
+
+    def __init__(self, feature: str) -> None:
+        super().__init__(f"Unsupported feature: {feature}")
+        self.feature = feature
+
+
 class ValidationError(ZendureError):
     """An input failed validation before any request was sent.
 
@@ -113,6 +125,7 @@ __all__ = [
     "ProvisioningFailedError",
     "ProvisioningTimeoutError",
     "UnsupportedDeviceError",
+    "UnsupportedFeatureError",
     "UnsupportedPropertyError",
     "ValidationError",
     "WriteNotConfirmedError",

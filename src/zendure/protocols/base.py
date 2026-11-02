@@ -8,7 +8,8 @@ implements it; nothing above this layer changes.
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
-from ..state.report import DeviceReport
+from ..exceptions import UnsupportedFeatureError
+from ..state.report import DeviceReport, FaultReport
 
 
 class DeviceProtocol(ABC):
@@ -26,6 +27,16 @@ class DeviceProtocol(ABC):
 
         Encoding to raw protocol values is the implementation's job.
         """
+
+    async def async_read_faults(self) -> FaultReport:
+        """Fetch the fault codes the device reports as active.
+
+        Optional: protocols that cannot read faults keep this default.
+
+        Raises:
+            UnsupportedFeatureError: this protocol or device has no fault codes.
+        """
+        raise UnsupportedFeatureError("fault codes")
 
 
 __all__ = ["DeviceProtocol"]

@@ -20,12 +20,14 @@ from ..events import (
     BatteryRemoved,
     DeviceAvailabilityChanged,
     DevicePropertiesChanged,
+    FaultCleared,
+    FaultRaised,
     ZendureEvent,
 )
 from ..exceptions import DeviceMismatchError, ValidationError
 from ..models import Availability, BatterySnapshot, DeviceSnapshot, PropertyValue
 from .merge import compute_changes, merge_values
-from .report import DeviceReport
+from .report import DeviceReport, FaultReport
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,6 +58,12 @@ class DeviceStore:
         self._protocol_version: int | None = None
         self._message_id: int | None = None
         self._timestamp: int | None = None
+        # None while unknown. The last known codes are kept apart so that a
+        # failed read followed by a good one only reports real changes.
+        self._active_faults: tuple[int, ...] | None = None
+        self._last_known_faults: tuple[int, ...] = ()
+        self._fault_since: dict[int, int] = {}
+        self._fault_outage = False
 
     @property
     def availability(self) -> Availability:
@@ -144,6 +152,62 @@ class DeviceStore:
             reason,
         )
         return self._apply_availability(Availability.OFFLINE)
+
+    def merge_faults(
+        self, report: FaultReport
+    ) -> tuple[DeviceSnapshot, list[ZendureEvent]]:
+        """Apply a fault report; return the snapshot and raise/clear events.
+
+        Requires a merged device report first: fault reports carry no serial
+        number, so the identity checked by that report is the one used here.
+        Fault reads never affect availability: they are a separate endpoint
+        and a failure there says nothing about the device's state readings.
+        """
+        assert self._serial_number is not None, "merge_faults() before first merge"
+        pinned = self._serial_number
+
+        previous = set(self._last_known_faults)
+        current = set(report.codes)
+        changes: list[FaultRaised | FaultCleared] = [
+            FaultRaised(serial_number=pinned, code=code)
+            for code in report.codes
+            if code not in previous
+        ]
+        changes.extend(
+            FaultCleared(serial_number=pinned, code=code)
+            for code in self._last_known_faults
+            if code not in current
+        )
+        if self._fault_outage:
+            _LOGGER.info("Fault codes of device %s readable again", mask_serial(pinned))
+            self._fault_outage = False
+        for change in changes:
+            # Only on change, so a lasting fault does not log every poll.
+            _LOGGER.info(
+                "Device %s fault %d %s",
+                mask_serial(pinned),
+                change.code,
+                "raised" if isinstance(change, FaultRaised) else "cleared",
+            )
+        self._active_faults = report.codes
+        self._last_known_faults = report.codes
+        self._fault_since = dict(report.since)
+        return self.snapshot(), list[ZendureEvent](changes)
+
+    def record_fault_failure(self, error: Exception) -> None:
+        """Mark faults unknown after a failed fault read.
+
+        Logs a WARNING only when faults go from known to unknown, so a
+        lasting outage does not flood the log.
+        """
+        serial = mask_serial(self._serial_number or "")
+        reason = type(error).__name__
+        if self._active_faults is not None:
+            _LOGGER.warning("Fault codes of device %s unavailable: %s", serial, reason)
+            self._fault_outage = True
+        else:
+            _LOGGER.debug("Fault read for device %s failed: %s", serial, reason)
+        self._active_faults = None
 
     def _apply_availability(self, new: Availability) -> list[ZendureEvent]:
         if self._serial_number is None or self._availability == new:
@@ -243,6 +307,15 @@ class DeviceStore:
             protocol_version=self._protocol_version,
             message_id=self._message_id,
             updated_at=updated_at,
+            active_faults=self._active_faults,
+            fault_since=(
+                {}
+                if self._active_faults is None
+                else {
+                    code: datetime.fromtimestamp(seconds, tz=UTC)
+                    for code, seconds in self._fault_since.items()
+                }
+            ),
         )
 
 

@@ -67,6 +67,8 @@ class FakeClient:
         self.write_error: Exception | None = None
         self.stop_error: Exception | None = None
         self.write_delay = 0.0
+        self.start_delay = 0.0
+        self.stop_delay = 0.0
         self._chars = {}
         for uuid in chars:
             char = MagicMock()
@@ -77,6 +79,8 @@ class FakeClient:
         self.services.get_characteristic.side_effect = self._chars.get
 
     async def start_notify(self, char: Any, callback: Notifier) -> None:
+        if self.start_delay:
+            await asyncio.sleep(self.start_delay)
         if self.start_error:
             raise self.start_error
         self.callback = callback
@@ -92,6 +96,8 @@ class FakeClient:
 
     async def stop_notify(self, char: Any) -> None:
         self.stop_calls += 1
+        if self.stop_delay:
+            await asyncio.sleep(self.stop_delay)
         self.notifying = False
         if self.stop_error:
             raise self.stop_error
@@ -281,6 +287,39 @@ async def test_provision_subscribe_failure() -> None:
     with pytest.raises(ZendureConnectionError):
         await async_provision_wifi(client, "MyWiFi", "secret123")  # type: ignore[arg-type]
     assert client.writes == []
+
+
+async def test_provision_subscribe_hang_is_link_failure(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr("zendure.ble.provision.SUBSCRIBE_TIMEOUT", 0.05)
+    client = FakeClient()
+    client.start_delay = 10
+
+    with (
+        caplog.at_level(logging.DEBUG, logger="zendure.ble.provision"),
+        pytest.raises(ZendureConnectionError, match="subscribing to replies timed out"),
+    ):
+        await async_provision_wifi(client, "MyWiFi", "secret123")  # type: ignore[arg-type]
+
+    assert client.writes == []
+    # Notifications may be half-enabled, so cleanup is still attempted.
+    assert client.stop_calls == 1
+    assert "BLE subscribing to" in caplog.text
+
+
+async def test_provision_cleanup_does_not_hang(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr("zendure.ble.provision.UNSUBSCRIBE_TIMEOUT", 0.05)
+    client = FakeClient()
+    client.stop_delay = 10
+
+    with caplog.at_level(logging.DEBUG, logger="zendure.ble.provision"):
+        result = await async_provision_wifi(client, "MyWiFi", "secret123")  # type: ignore[arg-type]
+
+    assert result.serial_number == SERIAL
+    assert "Stopping notifications timed out after 0.05 s" in caplog.text
 
 
 async def test_provision_write_failure_stops_notify() -> None:

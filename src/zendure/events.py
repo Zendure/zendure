@@ -65,6 +65,22 @@ class BatteryPropertiesChanged:
 
 
 @dataclass(frozen=True, slots=True)
+class FaultRaised:
+    """The device started reporting a fault code."""
+
+    serial_number: str
+    code: int
+
+
+@dataclass(frozen=True, slots=True)
+class FaultCleared:
+    """The device stopped reporting a fault code."""
+
+    serial_number: str
+    code: int
+
+
+@dataclass(frozen=True, slots=True)
 class ProtocolWarning:
     """A non-fatal protocol anomaly: unknown key, unknown enum, or new version.
 
@@ -82,6 +98,8 @@ type ZendureEvent = (
     | BatteryAdded
     | BatteryRemoved
     | BatteryPropertiesChanged
+    | FaultRaised
+    | FaultCleared
     | ProtocolWarning
 )
 
@@ -95,6 +113,8 @@ __all__ = [
     "DeviceAvailabilityChanged",
     "DevicePropertiesChanged",
     "EventListener",
+    "FaultCleared",
+    "FaultRaised",
     "ProtocolWarning",
     "ZendureEvent",
 ]

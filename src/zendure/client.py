@@ -11,10 +11,12 @@ import logging
 from collections.abc import Callable
 from typing import Final, Self
 
+from ._redact import mask_serial
 from .catalog.controls import control, validate_control
 from .events import EventListener, ZendureEvent
 from .exceptions import (
     ClientClosedError,
+    UnsupportedFeatureError,
     ValidationError,
     WriteNotConfirmedError,
     ZendureConnectionError,
@@ -60,6 +62,7 @@ class ZendureClient:
         self._inflight: asyncio.Task[DeviceSnapshot] | None = None
         self._closed = False
         self._write_lock = asyncio.Lock()
+        self._faults_supported: bool | None = None
 
     async def __aenter__(self) -> Self:
         return self
@@ -76,6 +79,11 @@ class ZendureClient:
     def availability(self) -> Availability:
         """Current availability."""
         return self._store.availability
+
+    @property
+    def faults_supported(self) -> bool | None:
+        """Whether the device reports fault codes; ``None`` until first asked."""
+        return self._faults_supported
 
     def subscribe(self, listener: EventListener) -> Callable[[], None]:
         """Register a change listener; returns a function that unsubscribes it."""
@@ -121,6 +129,41 @@ class ZendureClient:
         except (ZendureConnectionError, ZendureProtocolError) as err:
             self._dispatch(self._store.record_failure(err))
             raise
+        self._dispatch(events)
+        return snapshot
+
+    async def async_refresh_faults(self) -> DeviceSnapshot:
+        """Read the active fault codes once and merge them.
+
+        Reads the device first if it has never been read, since faults are
+        checked against its identity. A failed fault read never counts toward
+        the offline threshold: it only makes ``active_faults`` unknown.
+
+        Raises:
+            ClientClosedError: called after ``close()``.
+            UnsupportedFeatureError: the device cannot report fault codes. Then
+                every later call raises it again without contacting the device.
+            ZendureConnectionError / ZendureProtocolError: the read failed.
+        """
+        if self._closed:
+            raise ClientClosedError("client is closed")
+        if self._faults_supported is False:
+            raise UnsupportedFeatureError("fault codes")
+        snapshot = self.snapshot or await self.async_refresh()
+        try:
+            report = await self._protocol.async_read_faults()
+            snapshot, events = self._store.merge_faults(report)
+        except UnsupportedFeatureError:
+            self._faults_supported = False
+            _LOGGER.info(
+                "Device %s does not report fault codes",
+                mask_serial(snapshot.serial_number),
+            )
+            raise
+        except (ZendureConnectionError, ZendureProtocolError) as err:
+            self._store.record_fault_failure(err)
+            raise
+        self._faults_supported = True
         self._dispatch(events)
         return snapshot
 

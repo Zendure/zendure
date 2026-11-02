@@ -32,6 +32,12 @@ HANDSHAKE_TIMEOUT: Final = 5.0
 WRITE_TIMEOUT: Final = 10.0
 """Seconds allowed for the request write itself to be acknowledged."""
 
+SUBSCRIBE_TIMEOUT: Final = 10.0
+"""Seconds allowed for enabling notifications (the CCCD write)."""
+
+UNSUBSCRIBE_TIMEOUT: Final = 5.0
+"""Seconds allowed for disabling notifications during cleanup."""
+
 __all__ = [
     "COMMAND_CHAR_UUID",
     "DEFAULT_PROVISION_TIMEOUT",
@@ -41,5 +47,7 @@ __all__ = [
     "NOTIFY_CHAR_UUID",
     "PROVISIONING_SERVICE_UUID",
     "SERIAL_NUMBER_LENGTH",
+    "SUBSCRIBE_TIMEOUT",
+    "UNSUBSCRIBE_TIMEOUT",
     "WRITE_TIMEOUT",
 ]

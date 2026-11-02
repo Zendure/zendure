@@ -7,6 +7,7 @@ inheritance tree and runtime entity-building of the old integration.
 
 from .controls import CONTROL_DESCRIPTIONS, control, validate_control
 from .devices import DeviceCapability, lookup_device, normalize_product
+from .faults import FaultDescription, FaultLevel, fault_codes, lookup_fault
 from .sensors import (
     BATTERY_SENSOR_DESCRIPTIONS,
     DEVICE_SENSOR_DESCRIPTIONS,
@@ -19,10 +20,14 @@ __all__ = [
     "CONTROL_DESCRIPTIONS",
     "DEVICE_SENSOR_DESCRIPTIONS",
     "DeviceCapability",
+    "FaultDescription",
+    "FaultLevel",
     "battery_sensor",
     "control",
     "device_sensor",
+    "fault_codes",
     "lookup_device",
+    "lookup_fault",
     "normalize_product",
     "validate_control",
 ]

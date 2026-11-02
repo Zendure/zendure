@@ -16,6 +16,8 @@ from .events import (
     DeviceAvailabilityChanged,
     DevicePropertiesChanged,
     EventListener,
+    FaultCleared,
+    FaultRaised,
     ProtocolWarning,
     ZendureEvent,
 )
@@ -27,6 +29,7 @@ from .exceptions import (
     ProvisioningFailedError,
     ProvisioningTimeoutError,
     UnsupportedDeviceError,
+    UnsupportedFeatureError,
     UnsupportedPropertyError,
     ValidationError,
     WriteNotConfirmedError,
@@ -46,7 +49,7 @@ from .models import (
     SensorDescription,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
     "Availability",
@@ -62,6 +65,8 @@ __all__ = [
     "DeviceSnapshot",
     "EntityKind",
     "EventListener",
+    "FaultCleared",
+    "FaultRaised",
     "MalformedResponseError",
     "PropertyValue",
     "ProtocolWarning",
@@ -70,6 +75,7 @@ __all__ = [
     "ProvisioningTimeoutError",
     "SensorDescription",
     "UnsupportedDeviceError",
+    "UnsupportedFeatureError",
     "UnsupportedPropertyError",
     "ValidationError",
     "WriteNotConfirmedError",

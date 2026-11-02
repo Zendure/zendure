@@ -142,6 +142,7 @@ async def test_write_encodes_and_posts(
     assert device.writes == [
         {
             "sn": "TESTDEV00000001",
+            "source": 2,
             "id": 1,
             "properties": {"socSet": 900, "acMode": 2},
         }

@@ -36,7 +36,12 @@ def test_build_url_invalid_host() -> None:
 
 def test_write_body_shape() -> None:
     body = build_write_body("DEVSN", {"acMode": 2}, request_id=7)
-    assert json.loads(body) == {"sn": "DEVSN", "id": 7, "properties": {"acMode": 2}}
+    assert json.loads(body) == {
+        "sn": "DEVSN",
+        "source": 2,
+        "id": 7,
+        "properties": {"acMode": 2},
+    }
     assert b" " not in body  # compact separators
 
 

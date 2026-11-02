@@ -31,6 +31,8 @@ from .const import (
     HANDSHAKE_TIMEOUT,
     MAX_PACKET_BYTES,
     NOTIFY_CHAR_UUID,
+    SUBSCRIBE_TIMEOUT,
+    UNSUBSCRIBE_TIMEOUT,
     WRITE_TIMEOUT,
 )
 
@@ -208,6 +210,22 @@ async def _async_write(
     _LOGGER.debug("BLE TX acknowledged")
 
 
+async def _async_stop_notify(
+    client: BleakClient, notify: BleakGATTCharacteristic
+) -> None:
+    """Disable notifications without letting cleanup fail or hang."""
+    try:
+        async with asyncio.timeout(UNSUBSCRIBE_TIMEOUT):
+            await client.stop_notify(notify)
+    except TimeoutError:
+        _LOGGER.debug(
+            "Stopping notifications timed out after %g s", UNSUBSCRIBE_TIMEOUT
+        )
+    except BleakError:
+        # The device may drop the link right after replying.
+        _LOGGER.debug("Could not stop notifications", exc_info=True)
+
+
 def _characteristic(client: BleakClient, uuid: str) -> BleakGATTCharacteristic:
     char = client.services.get_characteristic(uuid)
     if char is None:
@@ -231,8 +249,9 @@ async def async_provision_wifi(
     Raises:
         ValidationError: invalid credentials or request too large for the link.
         ZendureProtocolError: the device lacks the provisioning service.
-        ZendureConnectionError: the BLE link failed, the device did not send
-            its ``BLESPP`` greeting, or a write timed out (outcome unknown).
+        ZendureConnectionError: the BLE link failed, enabling notifications
+            timed out, the device did not send its ``BLESPP`` greeting, or a
+            write timed out (outcome unknown).
         ProvisioningFailedError: the device could not join the network.
         ProvisioningTimeoutError: no result within ``result_timeout`` seconds.
         MalformedResponseError: the reply could not be understood.
@@ -247,8 +266,18 @@ async def async_provision_wifi(
         )
 
     collector = _ReplyCollector()
+    _LOGGER.debug(
+        "BLE subscribing to %s (timeout %g s)", NOTIFY_CHAR_UUID, SUBSCRIBE_TIMEOUT
+    )
     try:
-        await client.start_notify(notify, collector)
+        async with asyncio.timeout(SUBSCRIBE_TIMEOUT):
+            await client.start_notify(notify, collector)
+    except TimeoutError as err:
+        # BlueZ may have half-enabled notifications; undo them best effort.
+        await _async_stop_notify(client, notify)
+        raise ZendureConnectionError(
+            f"subscribing to replies timed out after {SUBSCRIBE_TIMEOUT:g} s"
+        ) from err
     except BleakError as err:
         raise ZendureConnectionError(f"could not subscribe to replies: {err}") from err
     _LOGGER.debug(
@@ -297,11 +326,7 @@ async def async_provision_wifi(
                 f"no provisioning result within {result_timeout:g} s"
             ) from err
     finally:
-        try:
-            await client.stop_notify(notify)
-        except BleakError:
-            # The device may drop the link right after replying.
-            _LOGGER.debug("Could not stop notifications", exc_info=True)
+        await _async_stop_notify(client, notify)
 
     result = parse_provision_reply(message)
     _LOGGER.debug(

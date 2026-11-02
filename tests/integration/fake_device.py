@@ -21,6 +21,9 @@ class FakeDevice:
         self.delay = 0.0
         self.writes: list[dict[str, Any]] = []
         self.report_calls = 0
+        self.error_codes: list[int] = []
+        self.error_status = 200
+        self.error_calls = 0
         self.active = 0
         self.peak_active = 0
 
@@ -28,7 +31,23 @@ class FakeDevice:
         app = web.Application()
         app.router.add_get("/properties/report", self.handle_report)
         app.router.add_post("/properties/write", self.handle_write)
+        app.router.add_get("/properties/error", self.handle_error)
         return app
+
+    async def handle_error(self, _request: web.Request) -> web.Response:
+        self.error_calls += 1
+        body = {
+            "messageId": 30,
+            "timestamp": 1793085345,
+            "deviceId": "VB2nRuA2",
+            "productKey": "vCK12r",
+            "offData": 0,
+            "eventId": 3,
+            "data": [
+                {"code": code, "timestamp": 1793085345} for code in self.error_codes
+            ],
+        }
+        return web.json_response(body, status=self.error_status)
 
     async def handle_report(self, _request: web.Request) -> web.Response:
         self.report_calls += 1

@@ -1,17 +1,24 @@
 """zenSDK local-HTTP implementation of ``DeviceProtocol``."""
 
+import json
+import logging
 from collections.abc import Mapping
+from typing import Final
 
 import aiohttp
 
-from ...exceptions import WriteRejectedError
-from ...state.report import DeviceReport
+from ...exceptions import UnsupportedFeatureError, WriteRejectedError
+from ...state.report import DeviceReport, FaultReport
 from ...transport.http import DEFAULT_TIMEOUT, HttpStatusError, HttpTransport
 from ..base import DeviceProtocol
 from .codec import encode_property
-from .messages import parse_report, parse_write_response
-from .rest import REPORT_PATH, WRITE_PATH, build_url, build_write_body
+from .messages import parse_fault_report, parse_report, parse_write_response
+from .rest import ERROR_PATH, REPORT_PATH, WRITE_PATH, build_url, build_write_body
 from .write_errors import write_error_message
+
+_LOGGER = logging.getLogger(__name__)
+
+_HTTP_NOT_FOUND: Final = 404
 
 
 class LocalHttpProtocol(DeviceProtocol):
@@ -27,12 +34,37 @@ class LocalHttpProtocol(DeviceProtocol):
     ) -> None:
         self._report_url = build_url(host, REPORT_PATH, port=port)
         self._write_url = build_url(host, WRITE_PATH, port=port)
+        self._error_url = build_url(host, ERROR_PATH, port=port)
         self._transport = HttpTransport(session, timeout=timeout)
         self._request_id = 0
 
     async def async_read(self) -> DeviceReport:
         """Fetch ``properties/report`` and decode it into a ``DeviceReport``."""
         return parse_report(await self._transport.get_json(self._report_url))
+
+    async def async_read_faults(self) -> FaultReport:
+        """Fetch ``properties/error`` and decode it into a ``FaultReport``.
+
+        Raises:
+            UnsupportedFeatureError: HTTP 404, i.e. firmware without the
+                endpoint.
+            HttpStatusError / MalformedResponseError / ZendureConnectionError:
+                as for ``async_read``.
+        """
+        try:
+            payload = await self._transport.get_json(self._error_url)
+        except HttpStatusError as err:
+            if err.status == _HTTP_NOT_FOUND:
+                raise UnsupportedFeatureError("fault codes") from err
+            raise
+        # Test phase: the whole reply, unmasked, to verify firmware fault
+        # reporting. It carries a cloud deviceId but no serial number.
+        _LOGGER.debug(
+            "Fault report from %s: %s",
+            self._error_url.host,
+            json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        )
+        return parse_fault_report(payload)
 
     async def async_write(
         self, serial_number: str, values: Mapping[str, int | float]

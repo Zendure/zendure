@@ -10,9 +10,13 @@ from ...exceptions import ValidationError
 
 REPORT_PATH: Final = "/properties/report"
 WRITE_PATH: Final = "/properties/write"
+ERROR_PATH: Final = "/properties/error"
 
 MAX_WRITE_BODY_BYTES: Final = 512
 """Device-side receive limit for the local API (zenSDK README)."""
+
+WRITE_SOURCE_HOME_ASSISTANT: Final = 2
+"""``source`` value that tells the device a write comes from Home Assistant."""
 
 
 def build_url(host: str, path: str, *, port: int | None = None) -> URL:
@@ -38,7 +42,12 @@ def build_write_body(
     Raises:
         ValidationError: the body exceeds the device's 512-byte limit.
     """
-    payload = {"sn": serial_number, "id": request_id, "properties": dict(properties)}
+    payload = {
+        "sn": serial_number,
+        "source": WRITE_SOURCE_HOME_ASSISTANT,
+        "id": request_id,
+        "properties": dict(properties),
+    }
     body = json.dumps(payload, separators=(",", ":")).encode()
     if len(body) > MAX_WRITE_BODY_BYTES:
         raise ValidationError(
@@ -48,9 +57,11 @@ def build_write_body(
 
 
 __all__ = [
+    "ERROR_PATH",
     "MAX_WRITE_BODY_BYTES",
     "REPORT_PATH",
     "WRITE_PATH",
+    "WRITE_SOURCE_HOME_ASSISTANT",
     "build_url",
     "build_write_body",
 ]

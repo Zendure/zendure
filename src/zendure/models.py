@@ -6,7 +6,7 @@ immutable; nothing in this package imports ``homeassistant``.
 """
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 from types import MappingProxyType
@@ -114,10 +114,20 @@ class DeviceSnapshot:
     protocol_version: int | None = None
     message_id: int | None = None
     updated_at: datetime | None = None
+    active_faults: tuple[int, ...] | None = None
+    """Fault codes the device reports as active; ``None`` when not known
+    (never read, the last read failed, or the device cannot report faults)."""
+    fault_since: Mapping[int, datetime] = field(default_factory=dict)
+    """When each active fault started, for codes the device timestamped."""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "properties", _freeze(self.properties))
         object.__setattr__(self, "batteries", tuple(self.batteries))
+        if self.active_faults is not None:
+            object.__setattr__(self, "active_faults", tuple(self.active_faults))
+        object.__setattr__(
+            self, "fault_since", MappingProxyType(dict(self.fault_since))
+        )
 
 
 __all__ = [
