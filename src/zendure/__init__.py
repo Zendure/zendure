@@ -45,11 +45,12 @@ from .models import (
     ControlDescription,
     DeviceSnapshot,
     EntityKind,
+    PackState,
     PropertyValue,
     SensorDescription,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = [
     "Availability",
@@ -68,6 +69,7 @@ __all__ = [
     "FaultCleared",
     "FaultRaised",
     "MalformedResponseError",
+    "PackState",
     "PropertyValue",
     "ProtocolWarning",
     "ProvisioningError",

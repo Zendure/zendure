@@ -33,6 +33,17 @@ class Availability(StrEnum):
     OFFLINE = "offline"
 
 
+class PackState(StrEnum):
+    """What the battery pack is doing, decoded from the reported state code.
+
+    Confirmed on real hardware: the device reports 0, 1 or 2.
+    """
+
+    STANDBY = "standby"
+    CHARGING = "charging"
+    DISCHARGING = "discharging"
+
+
 class EntityKind(StrEnum):
     """Generic entity category.
 

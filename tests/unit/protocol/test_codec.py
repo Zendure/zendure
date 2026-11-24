@@ -3,9 +3,11 @@
 import pytest
 
 from zendure.exceptions import ValidationError
+from zendure.models import PackState
 from zendure.protocols.local_http.codec import (
     decode_centi,
     decode_deci,
+    decode_pack_state,
     decode_property,
     decode_remain_time,
     decode_signed_deci,
@@ -54,6 +56,26 @@ def test_remain_time_sentinel_is_none() -> None:
 
 def test_remain_time_real_value_passes() -> None:
     assert decode_remain_time(120) == 120
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (0, PackState.STANDBY),
+        (1, PackState.CHARGING),
+        (2, PackState.DISCHARGING),
+    ],
+)
+def test_decode_pack_state(raw: int, expected: PackState) -> None:
+    assert decode_pack_state(raw) == expected
+
+
+def test_decode_pack_state_unknown_code_is_none() -> None:
+    assert decode_pack_state(3) is None
+
+
+def test_pack_state_decodes_through_decode_property() -> None:
+    assert decode_property("packState", 1) == PackState.CHARGING
 
 
 def test_decode_property_dispatches() -> None:

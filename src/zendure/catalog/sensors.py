@@ -64,7 +64,10 @@ _DEVICE: tuple[SensorDescription, ...] = (
         key="electricLevel", unit="%", device_class="battery", state_class="measurement"
     ),
     _power("gridInputPower"),  # On-grid input (charge from grid)
-    _power("gridOffPower"),  # Off-grid outlet: + output / - input (sign candidate)
+    # Off-grid outlet: + output / - input. Matches the cloud HEMS
+    # implementation, which adds a negative value to solar input; candidate
+    # until read off a device.
+    _power("gridOffPower"),
     _power("outputHomePower"),  # On-grid output
     _power("outputPackPower"),  # Battery charge power
     _power("packInputPower"),  # Battery discharge power
@@ -75,7 +78,7 @@ _DEVICE: tuple[SensorDescription, ...] = (
     _power("solarPower4"),
     _temperature("hyperTmp"),  # Enclosure temperature
     SensorDescription(key="packNum", state_class="measurement"),  # pack count
-    _enum("packState"),  # 0..2 (candidate)
+    _enum("packState"),  # decoded to PackState
     SensorDescription(
         key="remainOutTime",
         unit="min",

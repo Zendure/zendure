@@ -20,7 +20,7 @@ versions. Read and control are supported for:
 | Model | Reported `product` | Verified on real hardware |
 |---|---|---|
 | SolarFlow 2400 AC+ | `solarFlow2400AC+` | Yes |
-| SolarFlow 5000 Max Pro | `SolarFlow5000MaxPro` | Not yet (same property set as 2400 AC+) |
+| SolarFlow 5000 Max Pro | `SolarFlow5000MaxPro` | Yes |
 
 Protocol values are derived from a real 2400 AC+ report and the public zenSDK
 docs. Items whose meaning is not yet confirmed on hardware are marked
@@ -29,7 +29,8 @@ docs. Items whose meaning is not yet confirmed on hardware are marked
 ## Requirements
 
 - Python 3.14.2+
-- The device must already be added to HEMS (its local HTTP interface is then on)
+- The device is reachable on the local network (its local HTTP interface is on
+  whether or not the device is added to HEMS)
 
 ## Development
 

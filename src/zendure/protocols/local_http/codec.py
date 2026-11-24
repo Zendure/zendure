@@ -2,15 +2,15 @@
 
 Converts the device's raw integers into real-world values. These scaling rules
 are zenSDK-specific, which is why they live in the protocol layer, not the
-catalog. Every rule below was checked against a real SolarFlow 2400 AC+ report
-(same property set as 5000 Max Pro); items whose sign/semantics still need a
-live 5000 Max Pro are flagged "candidate" in the sensor catalog.
+catalog. Every rule below was checked against a real device report; items whose
+sign or semantics are still unconfirmed are flagged "candidate" in the sensor
+catalog.
 """
 
 from collections.abc import Callable
 
 from ...exceptions import ValidationError
-from ...models import PropertyValue
+from ...models import PackState, PropertyValue
 
 # remainOutTime uses 59940 (= 999 h) as an "invalid / infinite" sentinel.
 _REMAIN_TIME_SENTINEL = 59940
@@ -50,6 +50,18 @@ def decode_version(raw: int) -> str:
     return f"{major}.{minor}.{patch}"
 
 
+_PACK_STATES: dict[int, PackState] = {
+    0: PackState.STANDBY,
+    1: PackState.CHARGING,
+    2: PackState.DISCHARGING,
+}
+
+
+def decode_pack_state(raw: int) -> PropertyValue:
+    """Decode a battery state code, or None for a code the device never reports."""
+    return _PACK_STATES.get(raw)
+
+
 def decode_remain_time(raw: int) -> PropertyValue:
     """Minutes of remaining discharge, or None for the invalid sentinel."""
     if raw >= _REMAIN_TIME_SENTINEL:
@@ -67,6 +79,7 @@ _DECODERS: dict[str, Callable[[int], PropertyValue]] = {
     "batcur": decode_signed_deci,
     "softVersion": decode_version,
     "remainOutTime": decode_remain_time,
+    "packState": decode_pack_state,
     "socSet": decode_deci,
     "minSoc": decode_deci,
 }
@@ -102,6 +115,7 @@ def encode_property(key: str, value: int | float) -> int:
 __all__ = [
     "decode_centi",
     "decode_deci",
+    "decode_pack_state",
     "decode_property",
     "decode_remain_time",
     "decode_signed_deci",
